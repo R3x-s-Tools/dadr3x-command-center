@@ -1,0 +1,10 @@
+.venv/
+.env
+data/twitch_tokens.json
+__pycache__/
+*.pyc
+.DS_Store
+stream_logs/
+stream_reports/
+dist/
+build/

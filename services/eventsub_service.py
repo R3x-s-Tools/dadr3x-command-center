@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-import json, queue, threading, time
-from dataclasses import dataclass, asdict
-from typing import Callable, Optional
+import json
+import queue
+import threading
+import time
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
+
 import requests
 import websocket
 
@@ -20,7 +24,7 @@ class EventSubService:
     WS_URL = "wss://eventsub.wss.twitch.tv/ws"
     HELIX = "https://api.twitch.tv/helix"
 
-    def __init__(self, client_id: str, channel: str, token_provider: Callable[[], Optional[str]]):
+    def __init__(self, client_id: str, channel: str, token_provider: Callable[[], str | None]):
         self.client_id = client_id
         self.channel = channel.lower().strip().lstrip("#")
         self.token_provider = token_provider

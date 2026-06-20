@@ -6,10 +6,9 @@ import threading
 import time
 import urllib.parse
 import webbrowser
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from typing import Optional
 
 import requests
 
@@ -51,13 +50,13 @@ class TwitchAuthService:
         self.token_path.parent.mkdir(exist_ok=True)
         self.status = "Not logged in"
         self.last_error = ""
-        self._token: Optional[TokenStore] = None
+        self._token: TokenStore | None = None
         self.load()
 
     def configured(self) -> bool:
         return bool(self.client_id and self.client_secret and self.redirect_uri)
 
-    def load(self) -> Optional[TokenStore]:
+    def load(self) -> TokenStore | None:
         if not self.token_path.exists():
             return None
         try:
@@ -74,7 +73,7 @@ class TwitchAuthService:
         self._token = token
         self.token_path.write_text(json.dumps(asdict(token), indent=2), encoding="utf-8")
 
-    def ensure_access_token(self) -> Optional[TokenStore]:
+    def ensure_access_token(self) -> TokenStore | None:
         if not self._token:
             self.load()
         if not self._token:
@@ -85,15 +84,15 @@ class TwitchAuthService:
         self.status = "Authenticated"
         return self._token
 
-    def access_token(self) -> Optional[str]:
+    def access_token(self) -> str | None:
         token = self.ensure_access_token()
         return token.access_token if token else None
 
-    def oauth_token(self) -> Optional[str]:
+    def oauth_token(self) -> str | None:
         token = self.ensure_access_token()
         return f"oauth:{token.access_token}" if token else None
 
-    def refresh(self) -> Optional[TokenStore]:
+    def refresh(self) -> TokenStore | None:
         if not self._token:
             self.status = "No refresh token available"
             return None

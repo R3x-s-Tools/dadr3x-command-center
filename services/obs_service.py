@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -11,15 +10,15 @@ class ObsSnapshot:
     streaming: bool = False
     recording: bool = False
     current_scene: str = "Unknown"
-    fps: Optional[float] = None
-    cpu_usage: Optional[float] = None
-    memory_usage_mb: Optional[float] = None
+    fps: float | None = None
+    cpu_usage: float | None = None
+    memory_usage_mb: float | None = None
     render_missed_frames: int = 0
     render_total_frames: int = 0
-    render_lag_percent: Optional[float] = None
+    render_lag_percent: float | None = None
     output_skipped_frames: int = 0
     output_total_frames: int = 0
-    encoding_lag_percent: Optional[float] = None
+    encoding_lag_percent: float | None = None
     error: str = ""
 
 

@@ -8,3 +8,5 @@ stream_logs/
 stream_reports/
 dist/
 build/
+logs/command_center.jsonl
+logs/command_center.log

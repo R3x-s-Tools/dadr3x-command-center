@@ -3,9 +3,9 @@ from __future__ import annotations
 import socket
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from queue import Queue
-from typing import Callable, Optional
 
 
 @dataclass
@@ -16,7 +16,7 @@ class ChatMessage:
 
 
 class TwitchChatService:
-    def __init__(self, nick: str, channel: str, oauth_provider: Callable[[], Optional[str]]):
+    def __init__(self, nick: str, channel: str, oauth_provider: Callable[[], str | None]):
         self.nick = nick.strip()
         self.channel = channel.lower().strip().lstrip("#")
         self.oauth_provider = oauth_provider
@@ -69,7 +69,7 @@ class TwitchChatService:
                 while self.running:
                     try:
                         data = self.sock.recv(4096).decode("utf-8", errors="ignore")
-                    except socket.timeout:
+                    except TimeoutError:
                         continue
                     if not data:
                         raise ConnectionError("Twitch IRC returned empty data")
@@ -91,7 +91,7 @@ class TwitchChatService:
                 time.sleep(5)
 
     def _send(self, command: str):
-        self.sock.send(f"{command}\r\n".encode("utf-8"))
+        self.sock.send(f"{command}\r\n".encode())
 
     def _parse_privmsg(self, line: str) -> ChatMessage | None:
         try:

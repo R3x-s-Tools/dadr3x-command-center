@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, asdict
-from typing import Callable, Optional
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
+
 import requests
 
 
@@ -25,7 +26,7 @@ class TwitchSnapshot:
 
 class TwitchApiService:
     def __init__(
-        self, client_id: str, channel: str, access_token_provider: Callable[[], Optional[str]]
+        self, client_id: str, channel: str, access_token_provider: Callable[[], str | None]
     ):
         self.client_id = client_id
         self.channel = channel.lower().strip().lstrip("#")

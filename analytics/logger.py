@@ -5,7 +5,6 @@ import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from analytics.bot_filter import filter_human_chat
 from analytics.engine import AnalyticsEngine
@@ -38,7 +37,7 @@ class StreamLogger:
         self.twitch_samples: list[dict] = []
         self.twitch_events: list[dict] = []
 
-        self._last_viewers: Optional[int] = None
+        self._last_viewers: int | None = None
         self._last_viewer_event = 0
 
         self.analytics_engine = AnalyticsEngine()
@@ -52,7 +51,7 @@ class StreamLogger:
             session_file=str(self.session_file),
         )
 
-    def stream_time(self, when: Optional[float] = None) -> str:
+    def stream_time(self, when: float | None = None) -> str:
         seconds = int((when or time.time()) - self.started_at)
         return f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}"
 

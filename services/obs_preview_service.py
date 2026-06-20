@@ -3,13 +3,12 @@ from __future__ import annotations
 import base64
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
 class PreviewFrame:
     ok: bool
-    image_path: Optional[str] = None
+    image_path: str | None = None
     source_name: str = ""
     error: str = ""
 

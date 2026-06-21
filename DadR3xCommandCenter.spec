@@ -1,25 +1,39 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-datas = []
+from pathlib import Path
+import platform
 
-for optional_file in [".env.example", "README.md"]:
-    datas.append((optional_file, "."))
+project_root = Path.cwd()
+
+datas = []
+for optional_file in [".env.example", "README.md", "CHANGELOG.md"]:
+    optional_path = project_root / optional_file
+    if optional_path.exists():
+        datas.append((str(optional_path), "."))
+
+icon_path = None
+if platform.system() == "Darwin" and (project_root / "assets" / "icon.icns").exists():
+    icon_path = str(project_root / "assets" / "icon.icns")
+elif platform.system() == "Windows" and (project_root / "assets" / "icon.ico").exists():
+    icon_path = str(project_root / "assets" / "icon.ico")
+
+hiddenimports = [
+    "PySide6.QtCore",
+    "PySide6.QtGui",
+    "PySide6.QtWidgets",
+    "obsws_python",
+    "openai",
+    "requests",
+    "websocket",
+    "dotenv",
+]
 
 a = Analysis(
     ["app.py"],
-    pathex=[],
+    pathex=[str(project_root)],
     binaries=[],
     datas=datas,
-    hiddenimports=[
-        "PySide6.QtCore",
-        "PySide6.QtGui",
-        "PySide6.QtWidgets",
-        "obsws_python",
-        "openai",
-        "requests",
-        "websocket",
-        "dotenv",
-    ],
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -38,8 +52,10 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
+    icon=icon_path,
+    disable_windowed_traceback=False,
 )
 
 coll = COLLECT(
@@ -48,13 +64,22 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     name="DadR3x Command Center",
 )
 
-app = BUNDLE(
-    coll,
-    name="DadR3x Command Center.app",
-    icon=None,
-    bundle_identifier="tools.r3x.dadr3x-command-center",
-)
+if platform.system() == "Darwin":
+    app = BUNDLE(
+        coll,
+        name="DadR3x Command Center.app",
+        icon=icon_path,
+        bundle_identifier="tools.r3x.dadr3x-command-center",
+        info_plist={
+            "CFBundleName": "DadR3x Command Center",
+            "CFBundleDisplayName": "DadR3x Command Center",
+            "CFBundleIdentifier": "tools.r3x.dadr3x-command-center",
+            "CFBundleShortVersionString": "0.2.1",
+            "CFBundleVersion": "0.2.1",
+            "NSHighResolutionCapable": True,
+        },
+    )

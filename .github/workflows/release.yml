@@ -16,34 +16,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build clean source ZIP
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build source ZIP
         run: |
-          VERSION="${GITHUB_REF_NAME}"
-          ZIP_NAME="DadR3x_Command_Center_${VERSION}_Source.zip"
-
-          mkdir -p release/DadR3x_Command_Center
-
-          rsync -av \
-            --exclude ".git" \
-            --exclude ".github" \
-            --exclude ".venv" \
-            --exclude "__pycache__" \
-            --exclude ".pytest_cache" \
-            --exclude ".ruff_cache" \
-            --exclude ".DS_Store" \
-            --exclude ".env" \
-            --exclude "data/twitch_tokens.json" \
-            --exclude "data/viewer_memory.json" \
-            --exclude "logs" \
-            --exclude "stream_logs" \
-            --exclude "stream_reports" \
-            --exclude "dist" \
-            --exclude "build" \
-            ./ release/DadR3x_Command_Center/
-
+          python build/scripts/build_source_zip.py --version "${GITHUB_REF_NAME}"
           cd release
-          zip -r "${ZIP_NAME}" DadR3x_Command_Center
-          shasum -a 256 "${ZIP_NAME}" > "${ZIP_NAME}.sha256"
+          sha256sum "DadR3x_Command_Center_${GITHUB_REF_NAME}_Source.zip" > "DadR3x_Command_Center_${GITHUB_REF_NAME}_Source.zip.sha256"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -63,27 +44,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        shell: pwsh
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
-
       - name: Build Windows app
         shell: pwsh
-        run: pyinstaller --noconfirm DadR3xCommandCenter.spec
-
-      - name: Zip Windows app
-        shell: pwsh
-        run: |
-          $version = "${env:GITHUB_REF_NAME}"
-          $zipName = "DadR3x_Command_Center_${version}_Windows.zip"
-          New-Item -ItemType Directory -Force release | Out-Null
-          Compress-Archive -Path "dist/DadR3x Command Center" -DestinationPath "release/$zipName" -Force
-          Get-FileHash "release/$zipName" -Algorithm SHA256 | ForEach-Object {
-            "$($_.Hash)  $zipName"
-          } | Out-File -Encoding ascii "release/$zipName.sha256"
+        run: build/scripts/build_windows.ps1 -Version "${env:GITHUB_REF_NAME}"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -92,9 +55,9 @@ jobs:
             release/*.zip
             release/*.sha256
 
-  macos-app:
-    name: macOS App
-    runs-on: macos-latest
+  macos-arm64-app:
+    name: macOS App Apple Silicon
+    runs-on: macos-14
 
     steps:
       - uses: actions/checkout@v4
@@ -103,28 +66,33 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
-
-      - name: Build macOS app
-        run: pyinstaller --noconfirm DadR3xCommandCenter.spec
-
-      - name: Zip macOS app
-        run: |
-          VERSION="${GITHUB_REF_NAME}"
-          ZIP_NAME="DadR3x_Command_Center_${VERSION}_macOS.zip"
-          mkdir -p release
-          cd dist
-          zip -r "../release/${ZIP_NAME}" "DadR3x Command Center.app"
-          cd ../release
-          shasum -a 256 "${ZIP_NAME}" > "${ZIP_NAME}.sha256"
+      - name: Build macOS Apple Silicon app
+        run: bash build/scripts/build_mac.sh "${GITHUB_REF_NAME}_AppleSilicon"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: macos-app
+          name: macos-arm64-app
+          path: |
+            release/*.zip
+            release/*.sha256
+
+  macos-intel-app:
+    name: macOS App Intel
+    runs-on: macos-13
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build macOS Intel app
+        run: bash build/scripts/build_mac.sh "${GITHUB_REF_NAME}_Intel"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-intel-app
           path: |
             release/*.zip
             release/*.sha256
@@ -135,14 +103,15 @@ jobs:
     needs:
       - source-zip
       - windows-app
-      - macos-app
+      - macos-arm64-app
+      - macos-intel-app
 
     steps:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Gather files
+      - name: Gather release files
         run: |
           mkdir release-files
           find artifacts -type f -name "*.zip" -exec cp {} release-files/ \;
